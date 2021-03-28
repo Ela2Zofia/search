@@ -107,6 +107,7 @@ def main():
                         frontier.put((cost + distance(tar, neighbour), neighbour))
             
             # get the path from target back to start
+            # path tracking implementation inspired by https://www.redblobgames.com/pathfinding/a-star/implementation.html
             while come_from[tar] != i:
                 path.append(come_from[tar])
                 tar = come_from[tar]
