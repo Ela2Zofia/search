@@ -37,6 +37,7 @@ def main():
     lower = defaultdict(list)
     target = defaultdict(list)
     block = []
+    turn = 1
 
     board = generate_board()
 
@@ -97,16 +98,42 @@ def main():
                             if distance(neighbour, current) > 1:
                                 neighbours.append(neighbour)
 
+                # add node to priority queue if it is not yet there or there is a shorter route already
                 for neighbour in neighbours:
                     cost = cost_dict[current] + 1
                     if neighbour not in cost_dict.keys() or cost < cost_dict[cost]:
                         cost_dict[neighbour] = cost
                         come_from[neighbour] = current
                         frontier.put((cost + distance(tar, neighbour), neighbour))
-                
+            
+            # get the path from target back to start
+            while come_from[tar] != i:
+                path.append(come_from[tar])
+                tar = come_from[tar]
+            
+            # we only care about the first step of the moves
+            move_to = path[-1]
+            
+            # TODO: game rule check if the block we move into conatin any defeats
+
+            board_dict[move_to] = board_dict[i]
+            board_dict.pop(i)
+
+            upper[move_to] = upper[i]
+            upper.pop(i)
+
+
+
+            if distance(i, move_to) > 1:
+                print_swing(turn, i[0], i[1], move_to[0], move_to[1])
+            else:
+                print_slide(turn, i[0], i[1], move_to[0], move_to[1])
         
+
         if lower:
             finished = False
+        turn += 1
+        
 
     
     # print_board(board_dict, compact=False)
