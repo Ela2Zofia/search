@@ -9,6 +9,7 @@ This script contains the entry point to the program (the code in
 import sys
 import json
 import math
+import random
 from collections import defaultdict
 
 # If you want to separate your code into separate files, put them
@@ -69,10 +70,10 @@ def main():
 
             tar = target[i][0]
             
-            # if target[i]:
-            #     tar = target[i][0]
-            # else:
-            #     tar = 
+            if target[i]:
+                tar = target[i][0]
+            else:
+                tar = board[i][random.randint(0, len(target[i])-1)]
             
             frontier.put((0, i))
             cost_dict = {}
