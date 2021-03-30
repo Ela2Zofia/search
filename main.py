@@ -38,6 +38,8 @@ def main():
     lower = defaultdict(list)
     target = defaultdict(list)
     elude = defaultdict(list)
+    #store uppper token as key and its steps as values
+    upper_path = defaultdict(list)
     
     block = []
     turn = 1
@@ -59,6 +61,7 @@ def main():
                     elif category == "block":
                         block.append((token[1], token[2]))
 
+    #assign target to upper token
     for i in upper.keys():
         for j in lower.keys():
             if defeat(upper[i], lower[j]):
@@ -66,62 +69,26 @@ def main():
             elif defeat(lower[j], upper[i]):
                 elude[i].append(j)
 
+    #while lower can not move, the path just need to be calculated oncely
+    a_star(upper, target, upper_path, board, block)
 
     finished = False
     while not finished:
         finished = True
 
-        for i in upper.keys():
-            frontier = PriorityQueue()
+        for current_upper_token in upper_path.keys():
+            #move to next token's path if current token has finished
+            if not upper_path[current_upper_token]:
+                continue
 
-            tar = target[i][0]
-            
-            if target[i]:
-                tar = target[i][0]
-            else:
-                tar = board[i][random.randint(0, len(target[i])-1)]
-            
-            frontier.put((0, i))
-            cost_dict = {}
-            path = []
-            come_from = {}
-            cost_dict[i] = 0
+            tar = current_upper_token[1]
+            path = upper_path[current_upper_token]
+            origin = path[-1]
+            move_to = path[-2]
 
-            while not frontier.empty():
-                current = frontier.get()[1]
-                neighbours = []
-                if current == tar:
-                    break
-
-                # calculate distance to the target as a basic heuristic metric
-                for neighbour in board[current]:
-                    if neighbour not in block:
-                        neighbours.append(neighbour)
-                        
-                # check if swing is possible
-                for other in upper.keys():
-                    if distance(other, current) == 1:
-                        for neighbour in board[other]:
-                            if distance(neighbour, current) > 1:
-                                neighbours.append(neighbour)
-
-                # add node to priority queue if it is not yet there or there is a shorter route already
-                for neighbour in neighbours:
-                    cost = cost_dict[current] + 1
-                    if neighbour not in cost_dict.keys() or cost < cost_dict[neighbour]:
-                        cost_dict[neighbour] = cost
-                        come_from[neighbour] = current
-                        frontier.put((cost + distance(tar, neighbour), neighbour))
-            
+            '''
             #remove current target from lower dict
             del lower[tar]
-
-            # get the path from target back to start
-            # path tracking implementation inspired by https://www.redblobgames.com/pathfinding/a-star/implementation.html
-            while come_from[tar] != i:
-                path.append(come_from[tar])
-                tar = come_from[tar]
-
 
             # we only care about the first step of the moves
             move_to = path[-1]
@@ -133,24 +100,83 @@ def main():
 
             upper[move_to] = upper[i]
             upper.pop(i)
+            '''
 
-
-
+            #check whether swing of slide
             if distance(i, move_to) > 1:
-                print_swing(turn, i[0], i[1], move_to[0], move_to[1])
+                print_swing(turn, origin[0], origin[1], move_to[0], move_to[1])
             else:
-                print_slide(turn, i[0], i[1], move_to[0], move_to[1])
-        
-        #if lower token still exist, continue
-        if lower:
-            finished = False
+                print_slide(turn, origin[0], origin[1], move_to[0], move_to[1])
+            
+            #remove strating hex from path
+            path.remove(origin)
+            
+            #empty the path's list when path finishes
+            if path[-1] == tar:
+                del path[-1]
+            else:
+                finished = False
         turn += 1
         
 
-    
-    # print_board(board_dict, compact=False)
+def a_star(upper, target, upper_path, board, block):
+    for i in upper.keys():
+        frontier = PriorityQueue()
+
+        tar = target[i][0]
+            
+        if target[i]:
+            tar = target[i][0]
+        else:
+            tar = board[i][random.randint(0, len(target[i])-1)]
+            
+        frontier.put((0, i))
+        cost_dict = {}
+        path = []
+        come_from = {}
+        cost_dict[i] = 0
+
+        while not frontier.empty():
+            current = frontier.get()[1]
+            neighbours = []
+            if current == tar:
+                break
+
+            # calculate distance to the target as a basic heuristic metric
+            for neighbour in board[current]:
+                if neighbour not in block:
+                    neighbours.append(neighbour)
+                        
+            # check if swing is possible
+            for other in upper.keys():
+                if distance(other, current) == 1:
+                    for neighbour in board[other]:
+                        if distance(neighbour, current) > 1:
+                            neighbours.append(neighbour)
+
+            # add node to priority queue if it is not yet there or there is a shorter route already
+            for neighbour in neighbours:
+                cost = cost_dict[current] + 1
+                if neighbour not in cost_dict.keys() or cost < cost_dict[neighbour]:
+                    cost_dict[neighbour] = cost
+                    come_from[neighbour] = current
+                    frontier.put((cost + distance(tar, neighbour), neighbour))
+            
+        # get the path from target back to start
+        # path tracking implementation inspired by https://www.redblobgames.com/pathfinding/a-star/implementation.html
+        path.append(tar)
+        while come_from[tar] != i:
+            path.append(come_from[tar])
+            tar = come_from[tar]
+        path.append(come_from[tar])
+
+        #add path to corresponding upper token
+        upper_path[(i, target[i][0])] = path
+            
+# print_board(board_dict, compact=False)
 
 # def heuristics(upper, token, target):
+
 
 def distance(first, second):
     return (abs(first[1] - second[1]) + abs(first[1] - second[1] + first[0] - second[0]) + abs(first[0] - second[0])) / 2
