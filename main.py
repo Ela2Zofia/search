@@ -11,7 +11,6 @@ import json
 import math
 import random
 from collections import defaultdict
-import time
 
 # If you want to separate your code into separate files, put them
 # inside the `search` directory (like this one and `util.py`) and
@@ -64,7 +63,7 @@ def main():
                     elif category == "block":
                         block.append((token[1], token[2]))
 
-    #assign target to upper token
+    # assign target to each upper token
     for i in upper.keys():
         for j in lower.keys():
             if defeat(upper[i], lower[j]):
@@ -72,7 +71,7 @@ def main():
             elif defeat(lower[j], upper[i]):
                 elude[i].append(j)
 
-    
+    # records the cost
     cost_dict = {}
     for i in upper.keys():
         cost_dict[i] = {}
@@ -80,31 +79,23 @@ def main():
 
     while lower:
 
-        for current_upper_token in upper_path.keys():
-            a_star(current_upper_token, target, upper_path, board, block, upper, cost_dict)
+        for original_upper_token in upper_path.keys():
+            
+            if not upper_path[original_upper_token]:
+                prev_upper_token = original_upper_token
+            else:
+                prev_upper_token = upper_path[original_upper_token][-1]
+            
+            # calculate the a* path
+            a_star(prev_upper_token, original_upper_token, target, upper_path, board, block, upper, cost_dict)
 
-            path = upper_path[current_upper_token]
+            path = upper_path[original_upper_token]
             origin = path[-1]
             move_to = path[-2]
-
+            
+            # ypdate upper's location in upper list
             upper[move_to] = upper[origin]
             del upper[origin]
-
-            '''
-            #remove current target from lower dict
-            del lower[tar]
-
-            # we only care about the first step of the moves
-            move_to = path[-1]
-            
-            # TODO: game rule check if the block we move into conatin any defeats
-
-            board_dict[move_to] = board_dict[i]
-            board_dict.pop(i)
-
-            upper[move_to] = upper[i]
-            upper.pop(i)
-            '''
             
             #check whether swing or slide
             if distance(origin, move_to) > 1:
@@ -121,42 +112,22 @@ def main():
                 for i in target:
                     if path[-1] in target[i]:
                         target[i].remove(path[-1])
-                        cost_dict[i] = {}
-                        cost_dict[i][i] = 0
-
+                        #cost_dict[i] = {}
+                        #cost_dict[i][i] = 0
+                
+                #delete target from lower
                 del lower[path[-1]]
-                # del path[-1]
+                #del path[-1]
 
         turn += 1
-        #time.sleep(2)
 
 
-def a_star(original_upper_token, target, upper_path, board, block, upper, cost_dict):
+def a_star(current_upper_token, original_upper_token, target, upper_path, board, block, upper, cost_dict):
 
-    # if upper_path[original_upper_token]:
-    #     current_upper_token = upper_path[original_upper_token][-1]
-    # elif original_upper_token != :
-    #     current_upper_token = 
-    # else:
-    #     current_upper_token = original_upper_token
-    if len(upper_path[original_upper_token][-1])==1:
-        current_upper_token = upper_path[original_upper_token][-1]
-        del upper_path[original_upper_token][-1]
-    elif upper_path[original_upper_token]:
-        current_upper_token = upper_path[original_upper_token][-1]
-    else:
-        current_upper_token = original_upper_token
-
-
+    # records all frontiers which be checked
     frontier = PriorityQueue()
-
-    tar = target[original_upper_token][0]
-            
-    if target[original_upper_token]:
-        tar = target[original_upper_token][0]
-    else:
-        tar = board[original_upper_token][random.randint(0, len(target[original_upper_token])-1)]
-            
+    # target token
+    tar = target[original_upper_token][0] 
     frontier.put((0, current_upper_token))
     
     path = []
@@ -165,6 +136,7 @@ def a_star(original_upper_token, target, upper_path, board, block, upper, cost_d
     while not frontier.empty():
         current = frontier.get()[1]
         neighbours = []
+        # break if arrive the target
         if current == tar:
             break
 
@@ -187,6 +159,7 @@ def a_star(original_upper_token, target, upper_path, board, block, upper, cost_d
                 cost_dict[original_upper_token][neighbour] = cost
                 come_from[neighbour] = current
                 frontier.put((cost + distance(tar, neighbour), neighbour))
+    
     # get the path from target back to start
     # path tracking implementation inspired by https://www.redblobgames.com/pathfinding/a-star/implementation.html
     path.append(tar)
