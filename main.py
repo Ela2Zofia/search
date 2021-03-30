@@ -23,7 +23,7 @@ def main():
         with open(sys.argv[1]) as file:
             data = json.load(file)
     except IndexError:
-        print("usage: python3 -m search path/to/input.json", file=sys.stderr)
+        print("usage: python3 -m search path/to/input.json", file = sys.stderr)
         sys.exit(1)
     
     # TODO:
@@ -37,11 +37,13 @@ def main():
     upper = defaultdict(list)
     lower = defaultdict(list)
     target = defaultdict(list)
+    elude = defaultdict(list)
+    
     block = []
     turn = 1
 
     board = generate_board()
-
+    
     # preparation of the data
     for category in data:
         for token in data[category]:
@@ -52,7 +54,8 @@ def main():
                 else:
                     board_dict[(token[1], token[2])].append( "(" + token[0] + ")" )
                     if category == "lower":
-                        board_dict[(token[1], token[2])].append(token[0])
+                        #board_dict[(token[1], token[2])].append(token[0])
+                        lower[(token[1], token[2])].append(token[0])
                     elif category == "block":
                         block.append((token[1], token[2]))
 
@@ -60,6 +63,9 @@ def main():
         for j in lower.keys():
             if defeat(upper[i], lower[j]):
                 target[i].append(j)
+            elif defeat(lower[j], upper[i]):
+                elude[i].append(j)
+
 
     finished = False
     while not finished:
@@ -82,7 +88,7 @@ def main():
             cost_dict[i] = 0
 
             while not frontier.empty():
-                current = frontier.get()
+                current = frontier.get()[1]
                 neighbours = []
                 if current == tar:
                     break
@@ -102,17 +108,21 @@ def main():
                 # add node to priority queue if it is not yet there or there is a shorter route already
                 for neighbour in neighbours:
                     cost = cost_dict[current] + 1
-                    if neighbour not in cost_dict.keys() or cost < cost_dict[cost]:
+                    if neighbour not in cost_dict.keys() or cost < cost_dict[neighbour]:
                         cost_dict[neighbour] = cost
                         come_from[neighbour] = current
                         frontier.put((cost + distance(tar, neighbour), neighbour))
             
+            #remove current target from lower dict
+            del lower[tar]
+
             # get the path from target back to start
             # path tracking implementation inspired by https://www.redblobgames.com/pathfinding/a-star/implementation.html
             while come_from[tar] != i:
                 path.append(come_from[tar])
                 tar = come_from[tar]
-            
+
+
             # we only care about the first step of the moves
             move_to = path[-1]
             
@@ -131,7 +141,7 @@ def main():
             else:
                 print_slide(turn, i[0], i[1], move_to[0], move_to[1])
         
-
+        #if lower token still exist, continue
         if lower:
             finished = False
         turn += 1
@@ -146,8 +156,9 @@ def distance(first, second):
     return (abs(first[1] - second[1]) + abs(first[1] - second[1] + first[0] - second[0]) + abs(first[0] - second[0])) / 2
 
 def defeat(first, second):
-    f = first.lower()
-    s = second.lower()
+    f = first[0].lower()
+    s = second[0].lower()
+
     if f == "r":
         if s == "r":
             return False
