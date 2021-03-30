@@ -79,6 +79,7 @@ def main():
         for current_upper_token in upper_path.keys():
             #move to next token's path if current token has finished
             if not upper_path[current_upper_token]:
+                
                 continue
 
             tar = current_upper_token[1]
@@ -102,8 +103,8 @@ def main():
             upper.pop(i)
             '''
 
-            #check whether swing of slide
-            if distance(i, move_to) > 1:
+            #check whether swing or slide
+            if distance(origin, move_to) > 1:
                 print_swing(turn, origin[0], origin[1], move_to[0], move_to[1])
             else:
                 print_slide(turn, origin[0], origin[1], move_to[0], move_to[1])
@@ -172,11 +173,6 @@ def a_star(upper, target, upper_path, board, block):
 
         #add path to corresponding upper token
         upper_path[(i, target[i][0])] = path
-            
-# print_board(board_dict, compact=False)
-
-# def heuristics(upper, token, target):
-
 
 def distance(first, second):
     return (abs(first[1] - second[1]) + abs(first[1] - second[1] + first[0] - second[0]) + abs(first[0] - second[0])) / 2
