@@ -72,13 +72,16 @@ def main():
             elif defeat(lower[j], upper[i]):
                 elude[i].append(j)
 
-    #while lower can not move, the path just need to be calculated oncely
+    
+    cost_dict = {}
+    for i in upper.keys():
+        cost_dict[i] = {}
+        cost_dict[i][i] = 0
 
     while lower:
 
         for current_upper_token in upper_path.keys():
-            
-            a_star(current_upper_token, target, upper_path, board, block, upper)
+            a_star(current_upper_token, target, upper_path, board, block, upper, cost_dict)
 
             path = upper_path[current_upper_token]
             origin = path[-1]
@@ -111,7 +114,6 @@ def main():
             
             #remove strating hex from path
             path.remove(origin)
-            
             #empty the path's list and kill the target when path finishes
             if len(path) == 1:
             
@@ -119,21 +121,32 @@ def main():
                 for i in target:
                     if path[-1] in target[i]:
                         target[i].remove(path[-1])
+                        cost_dict[i] = {}
+                        cost_dict[i][i] = 0
 
                 del lower[path[-1]]
-                del path[-1]
+                # del path[-1]
 
         turn += 1
         #time.sleep(2)
 
 
-def a_star(original_upper_token, target, upper_path, board, block, upper):
+def a_star(original_upper_token, target, upper_path, board, block, upper, cost_dict):
 
-    if upper_path[original_upper_token]:
+    # if upper_path[original_upper_token]:
+    #     current_upper_token = upper_path[original_upper_token][-1]
+    # elif original_upper_token != :
+    #     current_upper_token = 
+    # else:
+    #     current_upper_token = original_upper_token
+    if len(upper_path[original_upper_token][-1])==1:
+        current_upper_token = upper_path[original_upper_token][-1]
+        del upper_path[original_upper_token][-1]
+    elif upper_path[original_upper_token]:
         current_upper_token = upper_path[original_upper_token][-1]
     else:
         current_upper_token = original_upper_token
-    
+
 
     frontier = PriorityQueue()
 
@@ -145,10 +158,9 @@ def a_star(original_upper_token, target, upper_path, board, block, upper):
         tar = board[original_upper_token][random.randint(0, len(target[original_upper_token])-1)]
             
     frontier.put((0, current_upper_token))
-    cost_dict = {}
+    
     path = []
     come_from = {}
-    cost_dict[current_upper_token] = 0
 
     while not frontier.empty():
         current = frontier.get()[1]
@@ -170,12 +182,11 @@ def a_star(original_upper_token, target, upper_path, board, block, upper):
 
         # add node to priority queue if it is not yet there or there is a shorter route already
         for neighbour in neighbours:
-            cost = cost_dict[current] + 1
-            if neighbour not in cost_dict.keys() or cost < cost_dict[neighbour]:
-                cost_dict[neighbour] = cost
+            cost = cost_dict[original_upper_token][current] + 1
+            if neighbour not in cost_dict[original_upper_token].keys() or cost <= cost_dict[original_upper_token][neighbour]:
+                cost_dict[original_upper_token][neighbour] = cost
                 come_from[neighbour] = current
                 frontier.put((cost + distance(tar, neighbour), neighbour))
-
     # get the path from target back to start
     # path tracking implementation inspired by https://www.redblobgames.com/pathfinding/a-star/implementation.html
     path.append(tar)
@@ -186,7 +197,6 @@ def a_star(original_upper_token, target, upper_path, board, block, upper):
 
     #add path to corresponding upper token
     upper_path[original_upper_token] = path
-    print(path)
 
 def distance(first, second):
     return (abs(first[1] - second[1]) + abs(first[1] - second[1] + first[0] - second[0]) + abs(first[0] - second[0])) / 2
