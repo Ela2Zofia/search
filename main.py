@@ -102,18 +102,19 @@ def main():
             upper[move_to] = upper[i]
             upper.pop(i)
             '''
-
+            
             #check whether swing or slide
-            #if distance(origin, move_to) > 1:
-                #print_swing(turn, origin[0], origin[1], move_to[0], move_to[1])
-            #else:
-                #print_slide(turn, origin[0], origin[1], move_to[0], move_to[1])
+            if distance(origin, move_to) > 1:
+                print_swing(turn, origin[0], origin[1], move_to[0], move_to[1])
+            else:
+                print_slide(turn, origin[0], origin[1], move_to[0], move_to[1])
             
             #remove strating hex from path
             path.remove(origin)
             
             #empty the path's list and kill the target when path finishes
             if len(path) == 1:
+            
                 #remove the be killed target from target list
                 for i in target:
                     if path[-1] in target[i]:
@@ -123,28 +124,31 @@ def main():
                 del path[-1]
 
         turn += 1
-
-        time.sleep(2)
-        
+        #time.sleep(2)
 
 
-def a_star(upper_token, target, upper_path, board, block, upper):
+def a_star(original_upper_token, target, upper_path, board, block, upper):
 
-    print(upper_token)
+    if upper_path[original_upper_token]:
+        current_upper_token = upper_path[original_upper_token][-1]
+    else:
+        current_upper_token = original_upper_token
+    
+
     frontier = PriorityQueue()
 
-    tar = target[upper_token][0]
+    tar = target[original_upper_token][0]
             
-    if target[upper_token]:
-        tar = target[upper_token][0]
+    if target[original_upper_token]:
+        tar = target[original_upper_token][0]
     else:
-        tar = board[upper_token][random.randint(0, len(target[upper_token])-1)]
+        tar = board[original_upper_token][random.randint(0, len(target[original_upper_token])-1)]
             
-    frontier.put((0, upper_token))
+    frontier.put((0, current_upper_token))
     cost_dict = {}
     path = []
     come_from = {}
-    cost_dict[upper_token] = 0
+    cost_dict[current_upper_token] = 0
 
     while not frontier.empty():
         current = frontier.get()[1]
@@ -156,7 +160,7 @@ def a_star(upper_token, target, upper_path, board, block, upper):
         for neighbour in board[current]:
             if neighbour not in block:
                 neighbours.append(neighbour)
-                        
+        
         # check if swing is possible
         for other in upper.keys():
             if distance(other, current) == 1:
@@ -171,17 +175,18 @@ def a_star(upper_token, target, upper_path, board, block, upper):
                 cost_dict[neighbour] = cost
                 come_from[neighbour] = current
                 frontier.put((cost + distance(tar, neighbour), neighbour))
-            
+
     # get the path from target back to start
     # path tracking implementation inspired by https://www.redblobgames.com/pathfinding/a-star/implementation.html
     path.append(tar)
-    while come_from[tar] != upper_token:
+    while come_from[tar] != current_upper_token:
         path.append(come_from[tar])
         tar = come_from[tar]
     path.append(come_from[tar])
 
     #add path to corresponding upper token
-    upper_path[upper_token] = path
+    upper_path[original_upper_token] = path
+    print(path)
 
 def distance(first, second):
     return (abs(first[1] - second[1]) + abs(first[1] - second[1] + first[0] - second[0]) + abs(first[0] - second[0])) / 2
